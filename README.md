@@ -61,8 +61,12 @@ The server registers skills through all three MCP primitives:
 | Tool | Description |
 |------|-------------|
 | `list_skills` | List all available skills with descriptions and file lists |
-| `use_skill` | Load a skill by name -- returns the full skill content as instructions to follow |
+| `use_skill` | Load a skill by name -- returns the full skill content as instructions to follow (optional guardrail enforcement) |
 | `get_skill_file` | Load a supporting file from a skill (reference docs, prompt templates, scripts) |
+| `recommend_skills` | Recommend top skills for a task using semantic ranking + workflow policy boosts |
+| `compose_workflow` | Build an ordered multi-skill workflow for a goal |
+| `validate_workflow` | Validate selected skills against required workflow guardrails |
+| `semantic_search_skills` | Semantic search across `SKILL.md` and supporting files |
 
 ### Prompts
 
@@ -107,6 +111,10 @@ Once connected, ask your AI assistant:
 - "Use the brainstorming skill to help me design a caching layer."
 - "Load the TDD skill and follow it to implement this feature."
 - "Read the anti-patterns file from the test-driven-development skill."
+- "Recommend the best skills for implementing this MCP feature."
+- "Compose a workflow for debugging flaky tests."
+- "Validate this workflow: brainstorming, writing-plans, test-driven-development."
+- "Search skills for root cause tracing techniques."
 
 ## Configuration
 

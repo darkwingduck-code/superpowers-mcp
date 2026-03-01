@@ -48,6 +48,38 @@ Test driven development content.`
             "# Anti-Patterns\n\nDon't do this."
         );
 
+        const debuggingDir = join(testDir, "systematic-debugging");
+        mkdirSync(debuggingDir);
+        writeFileSync(
+            join(debuggingDir, "SKILL.md"),
+            `---
+name: systematic-debugging
+description: Root cause analysis workflow
+---
+
+# Systematic Debugging
+
+Find root cause before patching.`
+        );
+        writeFileSync(
+            join(debuggingDir, "root-cause-tracing.md"),
+            "# Root Cause Tracing\n\nTrace symptoms back to the underlying failure source."
+        );
+
+        const verificationDir = join(testDir, "verification-before-completion");
+        mkdirSync(verificationDir);
+        writeFileSync(
+            join(verificationDir, "SKILL.md"),
+            `---
+name: verification-before-completion
+description: Verify outputs before completion
+---
+
+# Verification
+
+Run tests and validate outputs before claiming success.`
+        );
+
         const { server } = await createSuperpowersServer({ skillsDir: testDir });
 
         // Connect client to server via in-memory transport
@@ -68,6 +100,10 @@ Test driven development content.`
         expect(toolNames).toContain("list_skills");
         expect(toolNames).toContain("use_skill");
         expect(toolNames).toContain("get_skill_file");
+        expect(toolNames).toContain("recommend_skills");
+        expect(toolNames).toContain("compose_workflow");
+        expect(toolNames).toContain("validate_workflow");
+        expect(toolNames).toContain("semantic_search_skills");
     });
 
     it("should list prompts", async () => {
@@ -95,7 +131,7 @@ Test driven development content.`
         const result = await client.callTool({ name: "list_skills", arguments: {} });
         const text = (result.content as Array<{ type: string; text: string }>)[0].text;
         const skills = JSON.parse(text);
-        expect(skills).toHaveLength(2);
+        expect(skills).toHaveLength(4);
         expect(skills[0].name).toBe("brainstorming");
     });
 
@@ -144,5 +180,62 @@ Test driven development content.`
         });
         const text = (result.content as Array<{ type: string; text: string }>)[0].text;
         expect(text).toContain("# Anti-Patterns");
+    });
+
+    it("should call recommend_skills tool", async () => {
+        const result = await client.callTool({
+            name: "recommend_skills",
+            arguments: {
+                task: "Implement a feature with tests first and verify output",
+                max_results: 3,
+            },
+        });
+        const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+        const recommendations = JSON.parse(text);
+        expect(recommendations).toHaveLength(3);
+        const recommendedNames = recommendations.map((recommendation: { name: string }) => recommendation.name);
+        expect(recommendedNames).toContain("test-driven-development");
+    });
+
+    it("should call compose_workflow tool", async () => {
+        const result = await client.callTool({
+            name: "compose_workflow",
+            arguments: {
+                goal: "Debug a flaky production issue",
+            },
+        });
+        const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+        const workflow = JSON.parse(text);
+        expect(workflow.intent).toBe("debugging");
+        expect(workflow.steps[0].skill).toBe("systematic-debugging");
+    });
+
+    it("should call validate_workflow tool", async () => {
+        const result = await client.callTool({
+            name: "validate_workflow",
+            arguments: {
+                goal: "Debug a flaky production issue",
+                selected_skills: ["verification-before-completion"],
+            },
+        });
+        const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+        const validation = JSON.parse(text);
+        expect(validation.valid).toBe(false);
+        expect(validation.missing_required_skills).toContain("systematic-debugging");
+    });
+
+    it("should call semantic_search_skills tool across supporting files", async () => {
+        const result = await client.callTool({
+            name: "semantic_search_skills",
+            arguments: {
+                query: "trace symptoms to underlying failure source",
+                max_results: 2,
+            },
+        });
+        const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+        const matches = JSON.parse(text);
+        expect(matches.length).toBeGreaterThan(0);
+        expect(matches[0].skill).toBe("systematic-debugging");
+        expect(matches[0].file).toBe("root-cause-tracing.md");
     });
 });
