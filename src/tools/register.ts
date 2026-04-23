@@ -118,6 +118,12 @@ export function registerTools(
                 };
             }
 
+            if (fileName === "SKILL.md") {
+                return {
+                    content: [{ type: "text" as const, text: skill.content }],
+                };
+            }
+
             const fileEntry = skill.files.find((f) => f.name === fileName);
             if (!fileEntry) {
                 return {
