@@ -1,7 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import type { Skill } from "../skills/types.js";
 import {
     buildSkillIntelligenceIndex,
@@ -14,8 +13,7 @@ import {
 
 export function registerTools(
     server: McpServer,
-    skills: Skill[],
-    skillsDir?: string
+    skills: Skill[]
 ): void {
     const skillMap = new Map<string, Skill>();
     for (const skill of skills) {
@@ -26,7 +24,7 @@ export function registerTools(
     let intelligenceIndexPromise: Promise<Awaited<ReturnType<typeof buildSkillIntelligenceIndex>>> | null = null;
 
     const getIntelligenceIndex = async () => {
-        intelligenceIndexPromise ??= buildSkillIntelligenceIndex(skills, skillsDir);
+        intelligenceIndexPromise ??= buildSkillIntelligenceIndex(skills);
         return intelligenceIndexPromise;
     };
 
@@ -137,21 +135,8 @@ export function registerTools(
                 };
             }
 
-            if (!skillsDir) {
-                return {
-                    content: [
-                        {
-                            type: "text" as const,
-                            text: `Cannot read supporting files: skills directory not available (using bundled skills).`,
-                        },
-                    ],
-                    isError: true,
-                };
-            }
-
             try {
-                const filePath = join(skillsDir, fileEntry.relativePath);
-                const content = await readFile(filePath, "utf-8");
+                const content = await readFile(fileEntry.path, "utf-8");
                 return {
                     content: [{ type: "text" as const, text: content }],
                 };

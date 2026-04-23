@@ -5,7 +5,7 @@ export interface SkillMetadata {
 
 export interface SkillFile {
     name: string;
-    relativePath: string;
+    path: string;
 }
 
 export interface Skill {

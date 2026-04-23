@@ -1,5 +1,4 @@
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import type { Skill } from "../skills/types.js";
 
 export type WorkflowIntent =
@@ -327,8 +326,7 @@ export function inferIntent(input: string): WorkflowIntent {
 }
 
 export async function buildSkillIntelligenceIndex(
-    skills: Skill[],
-    skillsDir?: string
+    skills: Skill[]
 ): Promise<SkillIntelligenceIndex> {
     const documents: IndexedDocument[] = [];
 
@@ -349,12 +347,10 @@ export async function buildSkillIntelligenceIndex(
 
         for (const file of skill.files) {
             let fileContent = file.name;
-            if (skillsDir) {
-                try {
-                    fileContent = await readFile(join(skillsDir, file.relativePath), "utf-8");
-                } catch {
-                    fileContent = file.name;
-                }
+            try {
+                fileContent = await readFile(file.path, "utf-8");
+            } catch {
+                fileContent = file.name;
             }
             const fileTokens = tokenize(
                 `${skill.metadata.name} ${skill.metadata.description} ${file.name} ${fileContent}`

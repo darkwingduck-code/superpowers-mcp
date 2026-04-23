@@ -3,13 +3,11 @@ import {
     ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import type { Skill } from "../skills/types.js";
 
 export function registerResources(
     server: McpServer,
-    skills: Skill[],
-    skillsDir?: string
+    skills: Skill[]
 ): void {
     const skillMap = new Map<string, Skill>();
     for (const skill of skills) {
@@ -48,18 +46,7 @@ export function registerResources(
                     mimeType,
                 },
                 async (resourceUri) => {
-                    if (!skillsDir) {
-                        return {
-                            contents: [{
-                                uri: resourceUri.href,
-                                text: "Cannot read: skills directory not available.",
-                            }],
-                        };
-                    }
-                    const content = await readFile(
-                        join(skillsDir, file.relativePath),
-                        "utf-8"
-                    );
+                    const content = await readFile(file.path, "utf-8");
                     return {
                         contents: [{ uri: resourceUri.href, text: content }],
                     };
@@ -110,15 +97,6 @@ export function registerResources(
                 };
             }
 
-            if (!skillsDir) {
-                return {
-                    contents: [{
-                        uri: uri.href,
-                        text: "Cannot read: skills directory not available.",
-                    }],
-                };
-            }
-
             const fileEntry = skill.files.find((f) => f.name === String(fileName));
             if (!fileEntry) {
                 return {
@@ -129,10 +107,7 @@ export function registerResources(
                 };
             }
 
-            const content = await readFile(
-                join(skillsDir, fileEntry.relativePath),
-                "utf-8"
-            );
+            const content = await readFile(fileEntry.path, "utf-8");
             return {
                 contents: [{ uri: uri.href, text: content }],
             };

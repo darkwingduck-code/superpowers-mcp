@@ -21,7 +21,11 @@ async function main(): Promise<void> {
         effectiveSkillsDir = join(skillsDir, "skills");
     }
 
-    const { server } = await createSuperpowersServer({ skillsDir: effectiveSkillsDir });
+    if (effectiveSkillsDir) {
+        process.env.SUPERPOWERS_SKILLS_DIR = effectiveSkillsDir;
+    }
+
+    const { server } = await createSuperpowersServer();
     const transport = new StdioServerTransport();
     await server.connect(transport);
     console.error("superpowers-mcp: server running on stdio");

@@ -56,7 +56,7 @@ export async function discoverSkillsFromDirectory(
             .filter((f) => f !== "SKILL.md" && !f.startsWith("."))
             .map((f) => ({
                 name: f,
-                relativePath: `${entry}/${f}`,
+                path: join(entryPath, f),
             }));
 
         skills.push({
@@ -73,7 +73,20 @@ export async function discoverSkillsFromDirectory(
     return skills;
 }
 
-export function resolveSkillsDirectory(
+export async function discoverSkillsFromDirectories(
+    dirPaths: string[]
+): Promise<Skill[]> {
+    const skills: Skill[] = [];
+
+    for (const dirPath of dirPaths) {
+        const discovered = await discoverSkillsFromDirectory(dirPath);
+        skills.push(...discovered);
+    }
+
+    return skills;
+}
+
+export function resolvePrimarySkillsDirectory(
     env: Record<string, string | undefined> = process.env,
     claudeConfigDir?: string
 ): string | null {
@@ -116,4 +129,24 @@ export function resolveSkillsDirectory(
     if (existsSync(skillsDir)) return skillsDir;
 
     return null;
+}
+
+export function resolveSkillsDirectories(
+    env: Record<string, string | undefined> = process.env,
+    claudeConfigDir?: string
+): string[] {
+    const dirs: string[] = [];
+    const primaryDir = resolvePrimarySkillsDirectory(env, claudeConfigDir);
+
+    if (primaryDir) {
+        dirs.push(primaryDir);
+    }
+
+    const userSkillsDir =
+        env.SUPERPOWERS_USER_SKILLS_DIR ?? join(homedir(), ".codex", "skills");
+    if (existsSync(userSkillsDir) && !dirs.includes(userSkillsDir)) {
+        dirs.push(userSkillsDir);
+    }
+
+    return dirs;
 }
